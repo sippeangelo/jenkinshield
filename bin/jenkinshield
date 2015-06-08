@@ -1,18 +1,25 @@
 #!/usr/bin/node
+// vim: syntax=javascript
 var url = require('url');
 var request = require('request');
 var badge = require('gh-badges');
 var morgan = require('morgan');
+var program = require('commander');
 var app = require('express')();
 
-var port = process.env.PORT || 2323;
-if (process.env.LISTEN_PID > 0) {
-	require('systemd');
-	port = 'systemd';
+program
+	.version('1.0.0')
+	.option('-u, --url <url>', 'Jekins URL (http://username:password@server:port)')
+	.option('-p, --port [number]', 'Port [2323]', 2323)
+	.parse(process.argv);
+
+if (!program.url) {
+	program.help()
 }
 
 var config = {
-	jenkins: 'http://jenkins.daydreamengine.org',
+	port: program.port,
+	jenkins: program.url,
 	template: 'flat',
 	statusText: {
 		'SUCCESS': 'passing',
@@ -26,6 +33,11 @@ var config = {
 		'UNSTABLE': 'yellow',
 		undefined: 'lightgrey'
 	}
+}
+
+if (process.env.LISTEN_PID > 0) {
+	require('systemd');
+	config.port = 'systemd';
 }
 
 app.use(morgan('dev'))
@@ -93,7 +105,7 @@ function badgePrepareBuildResults(req, res, altText, json) {
 	var badgeOptions = { 
 		text: [ altText, status ], 
 		colorscheme: color,
-		template: config.template
+		template: req.query.template || config.template
 	}
 	sendSVG(res, badgeOptions);
 }
@@ -104,7 +116,7 @@ function badgePrepareTestResults(req, res, altText, json) {
 	var badgeOptions = {
 		text: [ altText || 'tests', json.passCount + ' / ' + totalCases ], 
 		colorscheme: color,
-		template: config.template
+		template: req.query.template || config.template
 	}
 	res.statusCode = 200;
 	sendSVG(res, badgeOptions);
@@ -131,5 +143,5 @@ app.use(function(err, req, res, next) {
 	res.statusCode = 500;
 });
 
-app.listen(port);
-console.log('Listening on port ' + port)
+app.listen(config.port);
+console.log('Listening on ' + config.port)
