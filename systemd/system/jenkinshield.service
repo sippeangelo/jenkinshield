@@ -1,0 +1,11 @@
+[Service]
+ExecStart=/usr/bin/jenkinshield
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=jenkinshield
+User=nobody
+Group=nobody
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

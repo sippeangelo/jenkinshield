@@ -1,0 +1,26 @@
+{
+  "name": "jenkinshield",
+  "version": "1.0.0",
+  "description": "Serves build status badges from Jenkins API",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.12.4",
+    "gh-badges": "^1.1.0",
+    "morgan": "^1.5.3",
+    "request": "^2.56.0",
+    "systemd": "^0.2.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "jenkins",
+    "shield",
+    "badge",
+    "build",
+    "tests"
+  ],
+  "author": "sippeangelo",
+  "license": "ISC"
+}
