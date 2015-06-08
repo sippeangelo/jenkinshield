@@ -1,3 +1,4 @@
+#!/usr/bin/node
 var url = require('url');
 var request = require('request');
 var badge = require('gh-badges');
