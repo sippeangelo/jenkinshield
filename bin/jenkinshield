@@ -133,7 +133,8 @@ function sendSVG(req, res, next, badgeOptions) {
 			if (err) {
 				return next(err);	
 			}
-
+			
+			res.setHeader('Cache-Control', 'no-cache');
 			res.setHeader('Content-Type', 'image/svg+xml');
 			res.send(svg);
 			if (res.statusCode == 200) {
