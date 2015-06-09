@@ -8,7 +8,7 @@ var program = require('commander');
 var app = require('express')();
 
 program
-	.version('1.0.4')
+	.version('1.0.5')
 	.option('-u, --url <url>', 'Jekins URL (http://username:password@server:port)', 'http://localhost:8080')
 	.option('-p, --port [number]', 'Port [2323]', 2323)
 	.parse(process.argv);
@@ -142,9 +142,9 @@ function sendSVG(req, res, next, badgeOptions) {
 					'[![' 
 					+ badgeOptions.text[0] + ' ' + badgeOptions.text[1]
 					+ ']('
-					+ config.jenkins + req.path
-					+ ')]('
 					+ req.protocol + '://' + req.get('host') + req.url
+					+ ')]('
+					+ config.jenkins + req.path
 					+ ')'
 				);
 			}
