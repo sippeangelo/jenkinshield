@@ -8,8 +8,8 @@ var program = require('commander');
 var app = require('express')();
 
 program
-	.version('1.0.2')
-	.option('-u, --url <url>', 'Jekins URL (http://username:password@server:port)')
+	.version('1.0.3')
+	.option('-u, --url <url>', 'Jekins URL (http://username:password@server:port)', 'http://localhost:8080')
 	.option('-p, --port [number]', 'Port [2323]', 2323)
 	.parse(process.argv);
 
@@ -42,62 +42,69 @@ if (process.env.LISTEN_PID > 0) {
 
 app.use(morgan('dev'))
 app.get('/job/:job/:build/:mode?', serveBadge);
-app.use(function(req, res) {
+app.use(function(req, res, next) {
 	var badgeOptions = { 
 		text: [ 'unknown', 'unknown' ], 
 		colorscheme: 'lightgrey',
 		template: config.template
 	}
+	res.statusCode = 404;
+	sendSVG(req, res, next, badgeOptions);
+});
+app.use(function(err, req, res, next) {
+	console.error(err.stack);
+	var badgeOptions = { 
+		text: [ 'unknown', 'error' ], 
+		colorscheme: 'red',
+		template: config.template
+	}
 	res.statusCode = 500;
-	sendSVG(req, res, badgeOptions);
+	sendSVG(req, res, next, badgeOptions);
 });
 
-function serveBadge(req, res) {
+function serveBadge(req, res, next) {
 	var altText = req.query.text;
 	if (altText) {
-		apiGetBuildInfo(req, res, altText);
+		apiGetBuildInfo(req, res, next, altText);
 	} else {
-		apiGetDisplayName(req, res);
+		apiGetDisplayName(req, res, next);
 	}
 }
 
-function apiGetDisplayName(req, res) {
+function apiGetDisplayName(req, res, next) {
 	var api = config.jenkins + '/job/' + req.params.job + '/api/json';
 	request.get({ url: api, json: true }, function(err, apiRes, json) {
 		if (err) {
-			console.error(err.stack);
-			apiGetBuildInfo(req, res, 'unknown');
+			return next(err);
 		} else if (apiRes.statusCode != 200) {
-			res.statusCode = 500;
-			apiGetBuildInfo(req, res, 'unknown');
+			return next();	
 		} else {
 			var displayName = json.displayName;
-			apiGetBuildInfo(req, res, displayName);
+			apiGetBuildInfo(req, res, next, displayName);
 		}
 	});
 }
 
-function apiGetBuildInfo(req, res, altText) {
+function apiGetBuildInfo(req, res, next, altText) {
 	var query = url.parse(req.url);
 	//var api = config.jenkins + '/job/' + req.params.job + '/lastBuild/api/json';
 	var api = config.jenkins + req.path + '/api/json';
 	request.get({ url: api, json: true }, function(err, apiRes, json) {
 		if (err) {
-			console.error(err.stack);
-		} 
-		if (apiRes.statusCode != 200) {
-			res.statusCode = 500;
+			return next(err);
+		} else if (apiRes.statusCode != 200) {
+			return next();
 		}
 		
 		if (req.params.mode == 'testReport') {
-			badgePrepareTestResults(req, res, altText, json)
+			badgePrepareTestResults(req, res, next, altText, json)
 		} else {
-			badgePrepareBuildResults(req, res, altText, json)
+			badgePrepareBuildResults(req, res, next, altText, json)
 		}
 	})
 }
 
-function badgePrepareBuildResults(req, res, altText, json) {
+function badgePrepareBuildResults(req, res, next, altText, json) {
 	var status = config.statusText[json.result] 
 	var color = config.statusColor[json.result];
 	var badgeOptions = { 
@@ -105,10 +112,10 @@ function badgePrepareBuildResults(req, res, altText, json) {
 		colorscheme: color,
 		template: req.query.template || config.template
 	}
-	sendSVG(req, res, badgeOptions);
+	sendSVG(req, res, next, badgeOptions);
 }
 
-function badgePrepareTestResults(req, res, altText, json) {
+function badgePrepareTestResults(req, res, next, altText, json) {
 	var totalCases = json.failCount + json.passCount + json.skipCount;
 	var color = (json.passCount >= totalCases) ? 'brightgreen' : 'red';
 	var badgeOptions = {
@@ -116,18 +123,15 @@ function badgePrepareTestResults(req, res, altText, json) {
 		colorscheme: color,
 		template: req.query.template || config.template
 	}
-	res.statusCode = 200;
-	sendSVG(req, res, badgeOptions);
+	sendSVG(req, res, next, badgeOptions);
 }
 
-function sendSVG(req, res, badgeOptions) {
+function sendSVG(req, res, next, badgeOptions) {
 	badge(
 		badgeOptions,
 		function(svg, err) {
 			if (err) {
-				console.error('Failed to generate badge')
-				console.error(err.stack)
-				return res.statusCode = 500;
+				return next(err);	
 			}
 
 			res.setHeader('Content-Type', 'image/svg+xml');
@@ -147,10 +151,6 @@ function sendSVG(req, res, badgeOptions) {
 	);
 }
 
-app.use(function(err, req, res, next) {
-	console.error(err.stack);
-	res.statusCode = 500;
-});
-
 app.listen(config.port);
 console.log('Listening on ' + config.port)
+console.log('Jenkins at ' + config.jenkins) 
