@@ -6,7 +6,7 @@ Using [gh-badges](https://www.npmjs.com/package/gh-badges)
 ## Install
 
 ```
-npm install -g
+npm install -g jenkinshield
 ```
 
 ## Usage

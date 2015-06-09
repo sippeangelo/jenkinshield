@@ -8,7 +8,7 @@ var program = require('commander');
 var app = require('express')();
 
 program
-	.version('1.0.0')
+	.version('1.0.1')
 	.option('-u, --url <url>', 'Jekins URL (http://username:password@server:port)')
 	.option('-p, --port [number]', 'Port [2323]', 2323)
 	.parse(process.argv);
