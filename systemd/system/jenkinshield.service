@@ -1,5 +1,5 @@
 [Service]
-ExecStart=/usr/bin/jenkinshield
+ExecStart=/usr/bin/jenkinshield --url=http://localhost:8080
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=jenkinshield
