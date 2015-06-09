@@ -1,6 +1,6 @@
 {
   "name": "jenkinshield",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Serves build status badges from Jenkins API",
   "main": "./bin/jenkinshield",
   "bin": {
